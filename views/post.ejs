@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <%- include layouts/header%>
+    <style>
+      .margin-plus{
+        margin: 5px;
+        background-color: red;
+      }
+
+      .margin-minus{
+        margin-top: -18px;
+
+      }
+    </style>
+  </head>
+  <body>
+
+    <form id="msgForm" action="#" method="POST" class="col s6 offset-s4">
+      <div class="container">
+        <div class="row">
+          <div class="col s12">
+            <h4><%= grupName%></h4>
+          </div>
+          <div class="input-field col s7 ">
+            <ul class="collection">
+            <% data.forEach(dat => { %>
+
+              <%if(id == dat.UserId){%>
+                  <span class="badge"><a href="/post/delete/<%=dat.id%>/<%=dat.GroupId%>">x</a></span>
+              <%}%>
+
+              <!-- <span class="badge">Created By <%= dat.User.username %></span> -->
+
+              <li class="collection-item"><%= dat.post %></li>
+
+            <% }) %>
+            </ul>
+          </div>
+          <div class="input-field col s2">
+            <ul class="collection">
+              <% data.forEach(dat => { %>
+                <%if(dat.User.id == id){%>
+                  <li class="collection-item">You</li>
+                <%}else{%>
+                  <li class="collection-item"><%= dat.User.username %></li>
+                <%}%>
+              <% }) %>
+
+            </ul>
+          </div>
+          <div class="input-field col s3 ">
+            <ul class="collection">
+              <li class="collection-item"><h6>Contributor</h6></li>
+            <% contr.forEach(dat => { %>
+              <li class="collection-item"><%= dat %></li>
+            <% }) %>
+            </ul>
+          </div>
+        </div>
+        <div class= 'row' id='messages'>
+
+        </div>
+        <div class="row">
+          <input placeholder="Write Here..." type="text" name="post" id="post" class="validate">
+          <button class="btn waves-effect waves-light" type="submit" name="action">Post</button>
+          <p>Post As <span id="orang"><%= username %></span></p>
+          <input type="hidden" id="orang2" value="<%= username %>">
+        </div>
+      </div>
+    </form>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+    <script>
+      $(function(){
+        var socket = io.connect();
+        var $messageForm = $('#msgForm');
+        var $message = $('#post');
+        var $chat = $('#messages');
+        var $orang = $('#orang2');
+
+        $messageForm.submit(function(e) {
+          e.preventDefault();
+          socket.emit('post message', $message.val(), $orang.val());
+          $.ajax({
+            type: 'POST',
+            data: {post: $message.val()},
+            url: '/post/<%= id %>/<%= idg %>',
+            success: function(resp) {
+              // alert(resp)
+            },
+            error: function() {
+            }
+          });
+          $message.val('')
+        });
+        socket.on('new message', function(data) {
+          // $chat.append('<span class="badge"> Created By <%= username %> </span>')
+          $chat.append('<span class="input-field col s7 margin-minus"><ul class="collection"><li class="collection-item">' + data.msg + '</li></ul></span>')
+          $chat.append('<span class="input-field col s2 margin-minus"><ul class="collection"><li class="collection-item">'+ data.username +' Said</li></ul></span>')
+        })
+      })
+    </script>
+  </body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <%- include layouts/header%>
+    <style>
+    .margin-minus{
+      margin-bottom: -25px;
+    }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  </head>
+  <body>
+  <div class="container">
+    <h5>Welcome, <%= username %></h5>
+    <a href='/logout' class="waves-effect waves-light btn"><i class="large material-icons">settings_power</i>Logout</a>
+    <a href='/menu/edit' class="waves-effect waves-light btn"><i class="large material-icons">account_box</i>Profile</a>
+    <span class="right-align" id="connected"></span>
+    <div class="col s6">
+
+    <% datas.forEach(data => { %>
+      <div class="row">
+        <div class="col s8 margin-minus">
+          <div class="collection">
+          <a href="/post/<%= data.id %>" class="collection-item">
+            <span class="badge">
+              Created By <%= data.User.username %>
+            </span>
+            <%= data.group_name %>
+          </a>
+          </div>
+        </div>
+        <div class="col s1 margin-minus">
+          <%if(username == data.User.username){%>
+          <a class='collection-item' href="group/delete/<%=data.id%>">X</a>
+          <%}%>
+        </div>
+      </div>
+    <% }) %>
+    <div class="row">
+      <div class="col s8 margin-minus">
+        <div class="collection" id="newGroup"></div>
+      </div>
+      <div class="col s1 margin-minus">
+
+      </div>
+    </div>
+
+  <form id="groupForm" action="#" method="POST" class="col s6 offset-s4">
+    <div class="row">
+      <div class="input-field col s6 ">
+        <input placeholder="Group Name" type="text" name="group_name" id="group_name" class="validate" required="" aria-required="true">
+        <input type="hidden" id="group_id" value="<%= group_id %>">
+        <input type="hidden" id="username" value="<%= username %>">
+        <button class="btn waves-effect waves-light" type="submit" name="action">Create Group</button>
+      </div>
+    </div>
+  </form>
+  </div>
+  </body>
+
+
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+  <script>
+    $(function(){
+      var socket = io.connect();
+      var $groupForm = $('#groupForm');
+      var $groupName = $('#group_name');
+      var $newGroup = $('#newGroup');
+      var $groupId = $('#group_id');
+      var $userName = $('#username');
+      var $konnekted = $('#connected')
+
+      $groupForm.submit(function(e) {
+        e.preventDefault();
+        $groupNameForResp = $groupName.val();
+
+        $.ajax({
+          type: 'POST',
+          data: {group_name: $groupName.val()},
+          url: '/group/create',
+          success: function(resp) {
+            console.log(resp.id);
+            console.log($groupNameForResp);
+             console.log($userName.val());
+             socket.emit('create group', $groupNameForResp, resp.id, $userName.val());
+          },
+          error: function() {
+          }
+        });
+        $groupName.val('')
+      });
+
+      socket.on('new group', function(data) {
+        $newGroup.append('<a href="/post/' + data.groupId + '" class="collection-item"> <span class="badge"> Created By ' + data.userName + ' </span> ' + data.groupName + ' </a>')
+      })
+
+      socket.on('connected', function(data) {
+        $konnekted.html(`<i class="material-icons">face</i> ${data.connected} Users Connected`);
+      })
+
+      socket.on('disconnected', function(data) {
+        $konnekted.html(`<i class="material-icons">face</i> ${data.connected} Users Connected`);
+      })
+    })
+  </script>
+</html>
